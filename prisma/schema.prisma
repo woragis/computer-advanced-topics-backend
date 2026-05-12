@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Verdict {
+  RELIABLE
+  SUSPICIOUS
+  FAKE
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  analyses     Analysis[]
+
+  @@map("users")
+}
+
+model Analysis {
+  id               String            @id @default(uuid()) @db.Uuid
+  userId           String            @map("user_id") @db.Uuid
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inputUrl         String?           @map("input_url")
+  inputText        String?           @map("input_text") @db.Text
+  rawText          String?           @map("raw_text") @db.Text
+  credibilityScore Float             @map("credibility_score")
+  verdict          Verdict
+  explanation      String?           @db.Text
+  createdAt        DateTime          @default(now()) @map("created_at")
+  claims           Claim[]
+  sources          AnalysisSource[]
+
+  @@index([userId])
+  @@map("analyses")
+}
+
+model Claim {
+  id         String   @id @default(uuid()) @db.Uuid
+  analysisId String   @map("analysis_id") @db.Uuid
+  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  text       String   @db.Text
+  isVerified Boolean  @map("is_verified")
+  confidence Float
+  sourceUrl  String?  @map("source_url")
+
+  @@index([analysisId])
+  @@map("claims")
+}
+
+model AnalysisSource {
+  id              String   @id @default(uuid()) @db.Uuid
+  analysisId      String   @map("analysis_id") @db.Uuid
+  analysis        Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  url             String
+  domain          String
+  reputationScore Float    @map("reputation_score")
+  isKnownSatire   Boolean  @map("is_known_satire")
+
+  @@index([analysisId])
+  @@map("analysis_sources")
+}
