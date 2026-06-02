@@ -5,6 +5,7 @@ import { env } from "./config/env.js";
 import { authRouter } from "./routes/auth.js";
 import { usersRouter } from "./routes/users.js";
 import { analysesRouter } from "./routes/analyses.js";
+import { initLogPublisher } from "./services/logPublisher.js";
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use(
   }
 );
 
-app.listen(env.PORT, () => {
+app.listen(env.PORT, async () => {
+  await initLogPublisher();
   console.log(`FakeRadar API listening on http://localhost:${env.PORT}`);
 });

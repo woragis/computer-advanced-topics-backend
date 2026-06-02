@@ -4,6 +4,7 @@ import jwt, { type SignOptions } from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "../db/prisma.js";
 import { env } from "../config/env.js";
+import { publishLog } from "../services/logPublisher.js";
 
 const registerBody = z.object({
   email: z.string().email(),
@@ -34,6 +35,12 @@ authRouter.post("/register", async (req, res) => {
     data: { email, passwordHash },
     select: { id: true, email: true, createdAt: true },
   });
+  publishLog({
+    level: "info",
+    event: "auth.register",
+    message: "User registered",
+    metadata: { userId: user.id, email: user.email },
+  });
   res.status(201).json({
     id: user.id,
     email: user.email,
@@ -62,6 +69,12 @@ authRouter.post("/login", async (req, res) => {
     expiresIn: env.JWT_EXPIRES_IN as SignOptions["expiresIn"],
   };
   const token = jwt.sign({ sub: user.id }, env.JWT_SECRET, signOptions);
+  publishLog({
+    level: "info",
+    event: "auth.login",
+    message: "User logged in",
+    metadata: { userId: user.id },
+  });
   res.json({
     token,
     user: { id: user.id, email: user.email },

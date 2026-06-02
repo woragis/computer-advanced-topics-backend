@@ -9,6 +9,8 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 characters"),
   JWT_EXPIRES_IN: z.string().default("86400s"),
   FRONTEND_ORIGIN: z.string().optional(),
+  RABBITMQ_URL: z.string().optional(),
+  LOG_QUEUE: z.string().default("fakeradar.logs"),
 });
 
 export type Env = z.infer<typeof envSchema>;

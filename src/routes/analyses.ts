@@ -4,6 +4,7 @@ import type { Analysis, Claim, AnalysisSource } from "@prisma/client";
 import { prisma } from "../db/prisma.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { AiServerError, callAiAnalyze } from "../services/aiClient.js";
+import { publishLog } from "../services/logPublisher.js";
 
 const createBody = z
   .object({
@@ -101,6 +102,18 @@ analysesRouter.post("/", requireAuth, async (req, res) => {
       },
     },
     include: { claims: true, sources: true },
+  });
+
+  publishLog({
+    level: "info",
+    event: "analysis.created",
+    message: "Analysis completed",
+    metadata: {
+      analysisId: row.id,
+      userId: row.userId,
+      verdict: row.verdict,
+      credibilityScore: row.credibilityScore,
+    },
   });
 
   res.status(201).json(toAnalysisJson(row));
