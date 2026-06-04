@@ -11,6 +11,9 @@ const envSchema = z.object({
   FRONTEND_ORIGIN: z.string().optional(),
   RABBITMQ_URL: z.string().optional(),
   LOG_QUEUE: z.string().default("fakeradar.logs"),
+  REANALYZE_COOLDOWN_HOURS: z.coerce.number().default(24),
+  DELETE_WINDOW_MINUTES: z.coerce.number().default(30),
+  PORTAL_PAGE_SIZE: z.coerce.number().default(20),
 });
 
 export type Env = z.infer<typeof envSchema>;

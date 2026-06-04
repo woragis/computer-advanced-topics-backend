@@ -13,20 +13,50 @@ enum Verdict {
   FAKE
 }
 
+enum ContentKind {
+  URL
+  TEXT
+}
+
 model User {
-  id           String     @id @default(uuid()) @db.Uuid
-  email        String     @unique
-  passwordHash String     @map("password_hash")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  analyses     Analysis[]
+  id                    String        @id @default(uuid()) @db.Uuid
+  email                 String        @unique
+  passwordHash          String        @map("password_hash")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  analyses              Analysis[]
+  firstSubmittedContent ContentItem[] @relation("FirstSubmissions")
 
   @@map("users")
 }
 
+model ContentItem {
+  id                 String      @id @default(uuid()) @db.Uuid
+  kind               ContentKind
+  canonicalKey       String      @unique @map("canonical_key")
+  displayUrl         String?     @map("display_url")
+  snippet            String?     @db.Text
+  firstSubmittedById String      @map("first_submitted_by_id") @db.Uuid
+  firstSubmittedBy   User        @relation("FirstSubmissions", fields: [firstSubmittedById], references: [id])
+  firstAnalyzedAt    DateTime    @map("first_analyzed_at")
+  lastAnalyzedAt     DateTime    @map("last_analyzed_at")
+  analysisCount      Int         @default(1) @map("analysis_count")
+  latestAnalysisId   String?     @unique @map("latest_analysis_id") @db.Uuid
+  latestAnalysis     Analysis?   @relation("LatestAnalysis", fields: [latestAnalysisId], references: [id], onDelete: SetNull)
+  analyses           Analysis[]  @relation("ContentItemAnalyses")
+  createdAt          DateTime    @default(now()) @map("created_at")
+
+  @@index([lastAnalyzedAt(sort: Desc)])
+  @@map("content_items")
+}
+
 model Analysis {
   id               String            @id @default(uuid()) @db.Uuid
+  contentItemId    String            @map("content_item_id") @db.Uuid
+  contentItem      ContentItem       @relation("ContentItemAnalyses", fields: [contentItemId], references: [id], onDelete: Cascade)
+  latestForContent ContentItem?      @relation("LatestAnalysis")
   userId           String            @map("user_id") @db.Uuid
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versionNumber    Int               @default(1) @map("version_number")
   inputUrl         String?           @map("input_url")
   inputText        String?           @map("input_text") @db.Text
   rawText          String?           @map("raw_text") @db.Text
@@ -37,7 +67,9 @@ model Analysis {
   claims           Claim[]
   sources          AnalysisSource[]
 
+  @@index([contentItemId])
   @@index([userId])
+  @@index([contentItemId, versionNumber])
   @@map("analyses")
 }
 

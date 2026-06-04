@@ -5,6 +5,7 @@ import { env } from "./config/env.js";
 import { authRouter } from "./routes/auth.js";
 import { usersRouter } from "./routes/users.js";
 import { analysesRouter } from "./routes/analyses.js";
+import { portalRouter } from "./routes/portal.js";
 import { initLogPublisher } from "./services/logPublisher.js";
 
 const app = express();
@@ -24,6 +25,7 @@ app.get("/health", (_req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/analyses", analysesRouter);
+app.use("/api/portal", portalRouter);
 
 app.use(
   (
